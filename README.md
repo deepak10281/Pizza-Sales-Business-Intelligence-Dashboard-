@@ -43,6 +43,7 @@ Python	Data cleaning & analysis
 SQL	Querying and data aggregation
 Power BI	Dashboard and visualization
 Excel/CSV Dataset	Source dataset
+
 📂 Project Structure
 Pizza-Sales-Business-Intelligence-Dashboard
 │
