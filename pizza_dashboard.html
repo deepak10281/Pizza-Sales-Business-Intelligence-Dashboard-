@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pizza Sales Dashboard 2015</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0e0e;
+    --surface: #1a1817;
+    --surface2: #222020;
+    --border: #2e2c2b;
+    --red: #e8341a;
+    --red-glow: rgba(232,52,26,0.15);
+    --orange: #f5813d;
+    --cream: #f5ede0;
+    --muted: #7a736d;
+    --text: #e8e0d8;
+    --chicken: #f5813d;
+    --classic: #e8341a;
+    --supreme: #c4223a;
+    --veggie: #5ab56e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--red);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .logo-text {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 2px;
+    color: var(--cream);
+  }
+
+  .logo-text span { color: var(--red); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .year-badge {
+    background: var(--red-glow);
+    border: 1px solid var(--red);
+    color: var(--red);
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+
+  /* Filter bar */
+  .filter-bar {
+    display: flex;
+    gap: 10px;
+    padding: 14px 32px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .filter-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-right: 4px;
+  }
+
+  .filter-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.15s;
+  }
+
+  .filter-btn:hover { border-color: var(--orange); color: var(--orange); }
+  .filter-btn.active { background: var(--red); border-color: var(--red); color: white; }
+
+  .filter-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+
+  /* Main layout */
+  .main {
+    padding: 24px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  /* KPI Cards */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent, var(--red));
+  }
+
+  .kpi-card:hover { border-color: var(--accent, var(--red)); }
+
+  .kpi-icon {
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+
+  .kpi-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .kpi-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 38px;
+    letter-spacing: 1px;
+    color: var(--cream);
+    line-height: 1;
+  }
+
+  .kpi-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .kpi-sub .up { color: #5ab56e; }
+  .kpi-sub .down { color: var(--red); }
+
+  /* Grid layouts */
+  .row-2-1 {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 16px;
+  }
+
+  .row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .row-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* Chart Cards */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 22px;
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--cream);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .card-subtitle {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .chart-wrap {
+    position: relative;
+  }
+
+  /* Pizza table */
+  .pizza-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+
+  .pizza-table th {
+    text-align: left;
+    padding: 8px 10px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .pizza-table th:hover { color: var(--orange); }
+
+  .pizza-table td {
+    padding: 9px 10px;
+    border-bottom: 1px solid rgba(46,44,43,0.5);
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .pizza-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 10px;
+    font-weight: 700;
+    background: var(--surface2);
+    color: var(--muted);
+  }
+
+  .rank-badge.top3 { background: var(--red); color: white; }
+
+  .cat-pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .cat-Chicken { background: rgba(245,129,61,0.15); color: var(--chicken); }
+  .cat-Classic { background: rgba(232,52,26,0.15); color: var(--classic); }
+  .cat-Supreme { background: rgba(196,34,58,0.15); color: #e05570; }
+  .cat-Veggie { background: rgba(90,181,110,0.15); color: var(--veggie); }
+
+  .bar-cell { display: flex; align-items: center; gap: 8px; }
+  .mini-bar { height: 5px; border-radius: 3px; background: var(--red); opacity: 0.7; transition: opacity 0.2s; }
+  .pizza-table tr:hover .mini-bar { opacity: 1; }
+
+  /* Progress bars for category */
+  .prog-row { margin-bottom: 14px; }
+  .prog-label { display: flex; justify-content: space-between; margin-bottom: 5px; }
+  .prog-name { font-size: 12px; font-weight: 500; color: var(--text); }
+  .prog-val { font-size: 12px; color: var(--muted); }
+  .prog-track { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+
+  /* Day heatmap */
+  .day-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .day-cell {
+    background: var(--surface2);
+    border-radius: 6px;
+    padding: 10px 6px;
+    text-align: center;
+    position: relative;
+    transition: transform 0.15s;
+  }
+  .day-cell:hover { transform: translateY(-2px); }
+  .day-name { font-size: 10px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .day-orders { font-family: 'Bebas Neue', sans-serif; font-size: 22px; color: var(--cream); }
+  .day-pct { font-size: 9px; color: var(--muted); margin-top: 2px; }
+
+  /* Scrollable table */
+  .table-wrap { max-height: 380px; overflow-y: auto; }
+  .table-wrap::-webkit-scrollbar { width: 4px; }
+  .table-wrap::-webkit-scrollbar-track { background: transparent; }
+  .table-wrap::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* Size donut legend */
+  .donut-legend { display: flex; flex-direction: column; gap: 8px; }
+  .legend-item { display: flex; align-items: center; justify-content: space-between; }
+  .legend-left { display: flex; align-items: center; gap: 8px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-name { font-size: 12px; color: var(--text); }
+  .legend-val { font-size: 12px; color: var(--muted); }
+
+  .donut-wrap { display: flex; gap: 24px; align-items: center; }
+  .donut-chart-area { flex-shrink: 0; }
+
+  /* Tooltip */
+  .tooltip {
+    position: fixed;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    pointer-events: none;
+    display: none;
+    z-index: 1000;
+    min-width: 140px;
+  }
+
+  .footer {
+    text-align: center;
+    padding: 20px;
+    color: var(--muted);
+    font-size: 11px;
+    border-top: 1px solid var(--border);
+  }
+
+  @media (max-width: 1100px) {
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    .row-2-1, .row-2, .row-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🍕</div>
+    <div class="logo-text">PIZZA <span>SALES</span> ANALYTICS</div>
+  </div>
+  <div class="header-right">
+    <span class="year-badge">FY 2015</span>
+    <span style="font-size:12px;color:var(--muted);">48,620 records · Live</span>
+  </div>
+</header>
+
+<!-- Filter Bar -->
+<div class="filter-bar">
+  <span class="filter-label">Category</span>
+  <button class="filter-btn active" onclick="filterCategory('All')">All</button>
+  <button class="filter-btn" onclick="filterCategory('Classic')">Classic</button>
+  <button class="filter-btn" onclick="filterCategory('Chicken')">Chicken</button>
+  <button class="filter-btn" onclick="filterCategory('Supreme')">Supreme</button>
+  <button class="filter-btn" onclick="filterCategory('Veggie')">Veggie</button>
+
+  <div class="filter-sep"></div>
+  <span class="filter-label">Size</span>
+  <button class="filter-btn active-size" onclick="filterSize('All')">All</button>
+  <button class="filter-btn" onclick="filterSize('Regular')">Regular</button>
+  <button class="filter-btn" onclick="filterSize('Medium')">Medium</button>
+  <button class="filter-btn" onclick="filterSize('Large')">Large</button>
+  <button class="filter-btn" onclick="filterSize('X-Large')">X-Large</button>
+</div>
+
+<div class="main">
+
+  <!-- KPI Row -->
+  <div class="kpi-row">
+    <div class="kpi-card" style="--accent:#e8341a">
+      <div class="kpi-icon">💰</div>
+      <div class="kpi-label">Total Revenue</div>
+      <div class="kpi-value" id="kpi-revenue">$817,860</div>
+      <div class="kpi-sub">Full year 2015</div>
+    </div>
+    <div class="kpi-card" style="--accent:#f5813d">
+      <div class="kpi-icon">🧾</div>
+      <div class="kpi-label">Total Orders</div>
+      <div class="kpi-value" id="kpi-orders">21,350</div>
+      <div class="kpi-sub">Avg $38.31 / order</div>
+    </div>
+    <div class="kpi-card" style="--accent:#5ab56e">
+      <div class="kpi-icon">🍕</div>
+      <div class="kpi-label">Pizzas Sold</div>
+      <div class="kpi-value" id="kpi-pizzas">49,574</div>
+      <div class="kpi-sub">Avg 2.32 per order</div>
+    </div>
+    <div class="kpi-card" style="--accent:#a78bfa">
+      <div class="kpi-icon">📅</div>
+      <div class="kpi-label">Best Month</div>
+      <div class="kpi-value" id="kpi-bestmonth">JULY</div>
+      <div class="kpi-sub">$72,558 revenue</div>
+    </div>
+  </div>
+
+  <!-- Row: Monthly Line + Category Bars -->
+  <div class="row-2-1">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Monthly Revenue Trend</div>
+          <div class="card-subtitle">January – December 2015</div>
+        </div>
+        <span style="font-size:11px;color:var(--muted)">$817K total</span>
+      </div>
+      <div class="chart-wrap" style="height:220px">
+        <canvas id="monthlyChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Revenue by Category</div>
+          <div class="card-subtitle">Share of total revenue</div>
+        </div>
+      </div>
+      <div id="catBars">
+        <div class="prog-row">
+          <div class="prog-label"><span class="prog-name">🍗 Classic</span><span class="prog-val">$220,053 · 26.9%</span></div>
+          <div class="prog-track"><div class="prog-fill" style="width:26.9%;background:#e8341a"></div></div>
+        </div>
+        <div class="prog-row">
+          <div class="prog-label"><span class="prog-name">👑 Supreme</span><span class="prog-val">$208,197 · 25.5%</span></div>
+          <div class="prog-track"><div class="prog-fill" style="width:25.5%;background:#c4223a"></div></div>
+        </div>
+        <div class="prog-row">
+          <div class="prog-label"><span class="prog-name">🍗 Chicken</span><span class="prog-val">$195,920 · 24.0%</span></div>
+          <div class="prog-track"><div class="prog-fill" style="width:24%;background:#f5813d"></div></div>
+        </div>
+        <div class="prog-row">
+          <div class="prog-label"><span class="prog-name">🥦 Veggie</span><span class="prog-val">$193,690 · 23.7%</span></div>
+          <div class="prog-track"><div class="prog-fill" style="width:23.7%;background:#5ab56e"></div></div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px;border-top:1px solid var(--border);padding-top:16px">
+        <div class="card-title" style="margin-bottom:12px">Orders by Day of Week</div>
+        <div class="day-grid" id="dayGrid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row: Bar chart + Donut -->
+  <div class="row-2">
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Top 10 Pizzas by Revenue</div>
+          <div class="card-subtitle">Ranked by total sales</div>
+        </div>
+      </div>
+      <div class="chart-wrap" style="height:260px">
+        <canvas id="topPizzaChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Sales by Pizza Size</div>
+          <div class="card-subtitle">Revenue distribution</div>
+        </div>
+      </div>
+      <div class="donut-wrap">
+        <div class="donut-chart-area" style="height:220px;width:220px">
+          <canvas id="sizeChart"></canvas>
+        </div>
+        <div class="donut-legend" id="sizeLegend"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Full Pizza Table -->
+  <div class="card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">All Pizzas — Detailed Breakdown</div>
+        <div class="card-subtitle">Click column headers to sort · <span id="tableCount">32 pizzas</span></div>
+      </div>
+      <input type="text" id="searchInput" placeholder="🔍 Search pizza..." onkeyup="searchTable()" style="
+        background:var(--surface2);border:1px solid var(--border);color:var(--text);
+        padding:6px 12px;border-radius:6px;font-size:12px;font-family:'DM Sans',sans-serif;
+        outline:none;width:180px;
+      ">
+    </div>
+    <div class="table-wrap">
+      <table class="pizza-table" id="pizzaTable">
+        <thead>
+          <tr>
+            <th onclick="sortTable(0)">#</th>
+            <th onclick="sortTable(1)">Pizza Name ↕</th>
+            <th onclick="sortTable(2)">Category ↕</th>
+            <th onclick="sortTable(3)">Revenue ↕</th>
+            <th onclick="sortTable(4)">Qty Sold ↕</th>
+            <th onclick="sortTable(5)">Orders ↕</th>
+            <th>Revenue Share</th>
+          </tr>
+        </thead>
+        <tbody id="pizzaTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">Pizza Sales Dashboard · FY 2015 · 48,620 transactions analyzed</div>
+
+<script>
+// ─── Data ──────────────────────────────────────────────────────────────────
+const MONTHLY = {
+  labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+  data: [69793, 65160, 70397, 68737, 71403, 68230, 72558, 68278, 64180, 64028, 70395, 64701]
+};
+
+const DAYS = [
+  {day:'Mon', orders:2794}, {day:'Tue', orders:2973}, {day:'Wed', orders:3024},
+  {day:'Thu', orders:3239}, {day:'Fri', orders:3538}, {day:'Sat', orders:3158}, {day:'Sun', orders:2624}
+];
+
+const SIZES = {
+  labels: ['Large','Medium','Regular','X-Large','XX-Large'],
+  data: [375298, 249403, 178076, 14076, 1007],
+  colors: ['#e8341a','#f5813d','#f5c23d','#5ab56e','#60a5fa']
+};
+
+const ALL_PIZZAS = [
+  {name:"The Thai Chicken Pizza",cat:"Chicken",rev:43434,qty:2371,orders:2225},
+  {name:"The Barbecue Chicken Pizza",cat:"Chicken",rev:42768,qty:2432,orders:2273},
+  {name:"The California Chicken Pizza",cat:"Chicken",rev:41410,qty:2370,orders:2197},
+  {name:"The Classic Deluxe Pizza",cat:"Classic",rev:38181,qty:2453,orders:2329},
+  {name:"The Spicy Italian Pizza",cat:"Supreme",rev:34831,qty:1924,orders:1822},
+  {name:"The Southwest Chicken Pizza",cat:"Chicken",rev:34706,qty:1917,orders:1825},
+  {name:"The Italian Supreme Pizza",cat:"Supreme",rev:33477,qty:1884,orders:1791},
+  {name:"The Hawaiian Pizza",cat:"Classic",rev:32273,qty:2422,orders:2280},
+  {name:"The Four Cheese Pizza",cat:"Veggie",rev:32266,qty:1902,orders:1809},
+  {name:"The Sicilian Pizza",cat:"Supreme",rev:30941,qty:1938,orders:1820},
+  {name:"The Pepperoni Pizza",cat:"Classic",rev:30162,qty:2418,orders:2278},
+  {name:"The Greek Pizza",cat:"Classic",rev:28454,qty:1420,orders:1361},
+  {name:"The Mexicana Pizza",cat:"Veggie",rev:26781,qty:1484,orders:1426},
+  {name:"The Five Cheese Pizza",cat:"Veggie",rev:26067,qty:1409,orders:1359},
+  {name:"The Pepper Salami Pizza",cat:"Supreme",rev:25529,qty:1446,orders:1383},
+  {name:"The Italian Capocollo Pizza",cat:"Classic",rev:25094,qty:1438,orders:1380},
+  {name:"The Vegetables + Vegetables Pizza",cat:"Veggie",rev:24375,qty:1526,orders:1463},
+  {name:"The Prosciutto and Arugula Pizza",cat:"Supreme",rev:24193,qty:1457,orders:1398},
+  {name:"The Napolitana Pizza",cat:"Classic",rev:24087,qty:1464,orders:1421},
+  {name:"The Spinach and Feta Pizza",cat:"Veggie",rev:23271,qty:1446,orders:1402},
+  {name:"The Big Meat Pizza",cat:"Classic",rev:22968,qty:1914,orders:1811},
+  {name:"The Pepperoni, Mushroom, and Peppers Pizza",cat:"Classic",rev:18835,qty:1359,orders:1316},
+  {name:"The Chicken Alfredo Pizza",cat:"Chicken",rev:16900,qty:987,orders:967},
+  {name:"The Chicken Pesto Pizza",cat:"Chicken",rev:16702,qty:973,orders:938},
+  {name:"The Soppressata Pizza",cat:"Supreme",rev:16426,qty:961,orders:941},
+  {name:"The Italian Vegetables Pizza",cat:"Veggie",rev:16019,qty:981,orders:952},
+  {name:"The Calabrese Pizza",cat:"Supreme",rev:15934,qty:937,orders:918},
+  {name:"The Spinach Pesto Pizza",cat:"Veggie",rev:15596,qty:970,orders:945},
+  {name:"The Mediterranean Pizza",cat:"Supreme",rev:15361,qty:934,orders:912},
+  {name:"The Spinach Supreme Pizza",cat:"Supreme",rev:15278,qty:950,orders:918},
+  {name:"The Green Garden Pizza",cat:"Veggie",rev:13956,qty:997,orders:976},
+  {name:"The Brie Carre Pizza",cat:"Supreme",rev:11588,qty:490,orders:480},
+];
+
+const maxRev = ALL_PIZZAS[0].rev;
+let currentCategory = 'All';
+let currentSize = 'All';
+let sortCol = 3, sortAsc = false;
+let searchQuery = '';
+
+// ─── Charts ────────────────────────────────────────────────────────────────
+const chartDefaults = {
+  color: '#7a736d',
+  font: { family: "'DM Sans', sans-serif" }
+};
+Chart.defaults.color = chartDefaults.color;
+Chart.defaults.font.family = chartDefaults.font.family;
+
+// Monthly
+const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+const gradient = monthlyCtx.createLinearGradient(0, 0, 0, 220);
+gradient.addColorStop(0, 'rgba(232,52,26,0.3)');
+gradient.addColorStop(1, 'rgba(232,52,26,0.0)');
+
+const monthlyChart = new Chart(monthlyCtx, {
+  type: 'line',
+  data: {
+    labels: MONTHLY.labels,
+    datasets: [{
+      label: 'Revenue',
+      data: MONTHLY.data,
+      borderColor: '#e8341a',
+      backgroundColor: gradient,
+      borderWidth: 2,
+      pointBackgroundColor: '#e8341a',
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      fill: true,
+      tension: 0.4,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` $${ctx.parsed.y.toLocaleString()}`
+        }
+      }
+    },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { font: { size: 11 } } },
+      y: {
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: {
+          font: { size: 11 },
+          callback: v => '$' + (v/1000).toFixed(0) + 'K'
+        }
+      }
+    }
+  }
+});
+
+// Top Pizza Bar
+const top10 = ALL_PIZZAS.slice(0, 10);
+const catColors = { Chicken: '#f5813d', Classic: '#e8341a', Supreme: '#c4223a', Veggie: '#5ab56e' };
+
+const barCtx = document.getElementById('topPizzaChart').getContext('2d');
+const topPizzaChart = new Chart(barCtx, {
+  type: 'bar',
+  data: {
+    labels: top10.map(p => p.name.replace('The ', '').replace(' Pizza', '')),
+    datasets: [{
+      label: 'Revenue',
+      data: top10.map(p => p.rev),
+      backgroundColor: top10.map(p => catColors[p.cat] + 'cc'),
+      borderColor: top10.map(p => catColors[p.cat]),
+      borderWidth: 1,
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` $${ctx.parsed.x.toLocaleString()}`
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: 'rgba(255,255,255,0.04)' },
+        ticks: { callback: v => '$' + (v/1000).toFixed(0) + 'K', font: { size: 10 } }
+      },
+      y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+    }
+  }
+});
+
+// Donut - Size
+const sizeCtx = document.getElementById('sizeChart').getContext('2d');
+const sizeChart = new Chart(sizeCtx, {
+  type: 'doughnut',
+  data: {
+    labels: SIZES.labels,
+    datasets: [{
+      data: SIZES.data,
+      backgroundColor: SIZES.colors.map(c => c + 'cc'),
+      borderColor: SIZES.colors,
+      borderWidth: 2,
+      hoverOffset: 6,
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: '68%',
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` $${ctx.parsed.toLocaleString()} (${(ctx.parsed / SIZES.data.reduce((a,b)=>a+b,0) * 100).toFixed(1)}%)`
+        }
+      }
+    }
+  }
+});
+
+// Render legend
+const legendEl = document.getElementById('sizeLegend');
+const totalSize = SIZES.data.reduce((a,b)=>a+b,0);
+SIZES.labels.forEach((l, i) => {
+  legendEl.innerHTML += `
+    <div class="legend-item">
+      <div class="legend-left">
+        <div class="legend-dot" style="background:${SIZES.colors[i]}"></div>
+        <span class="legend-name">${l}</span>
+      </div>
+      <span class="legend-val">$${(SIZES.data[i]/1000).toFixed(0)}K · ${(SIZES.data[i]/totalSize*100).toFixed(1)}%</span>
+    </div>`;
+});
+
+// Day Grid
+const dayGrid = document.getElementById('dayGrid');
+const maxOrders = Math.max(...DAYS.map(d => d.orders));
+DAYS.forEach(d => {
+  const intensity = d.orders / maxOrders;
+  const bg = `rgba(232,52,26,${0.1 + intensity * 0.5})`;
+  dayGrid.innerHTML += `
+    <div class="day-cell" style="background:${bg}">
+      <div class="day-name">${d.day}</div>
+      <div class="day-orders">${d.orders.toLocaleString()}</div>
+      <div class="day-pct">${(d.orders/maxOrders*100).toFixed(0)}%</div>
+    </div>`;
+});
+
+// ─── Table ─────────────────────────────────────────────────────────────────
+function renderTable() {
+  let data = [...ALL_PIZZAS];
+  if (currentCategory !== 'All') data = data.filter(p => p.cat === currentCategory);
+  if (searchQuery) data = data.filter(p => p.name.toLowerCase().includes(searchQuery));
+
+  data.sort((a, b) => {
+    const cols = [null, 'name', 'cat', 'rev', 'qty', 'orders'];
+    if (sortCol === 0) return 0;
+    const key = cols[sortCol];
+    if (typeof a[key] === 'string') return sortAsc ? a[key].localeCompare(b[key]) : b[key].localeCompare(a[key]);
+    return sortAsc ? a[key] - b[key] : b[key] - a[key];
+  });
+
+  document.getElementById('tableCount').textContent = data.length + ' pizzas';
+  const tbody = document.getElementById('pizzaTableBody');
+  tbody.innerHTML = data.map((p, i) => {
+    const barW = Math.round(p.rev / maxRev * 100);
+    const rankClass = i < 3 ? 'top3' : '';
+    return `<tr>
+      <td><span class="rank-badge ${rankClass}">${i+1}</span></td>
+      <td>${p.name}</td>
+      <td><span class="cat-pill cat-${p.cat}">${p.cat}</span></td>
+      <td><strong>$${p.rev.toLocaleString()}</strong></td>
+      <td>${p.qty.toLocaleString()}</td>
+      <td>${p.orders.toLocaleString()}</td>
+      <td>
+        <div class="bar-cell">
+          <div class="mini-bar" style="width:${barW * 0.9}px"></div>
+          <span style="font-size:11px;color:var(--muted)">${(p.rev/817860*100).toFixed(1)}%</span>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function sortTable(col) {
+  if (sortCol === col) sortAsc = !sortAsc;
+  else { sortCol = col; sortAsc = false; }
+  renderTable();
+}
+
+function searchTable() {
+  searchQuery = document.getElementById('searchInput').value.toLowerCase();
+  renderTable();
+}
+
+// ─── Filters ───────────────────────────────────────────────────────────────
+function filterCategory(cat) {
+  currentCategory = cat;
+  document.querySelectorAll('.filter-bar .filter-btn').forEach(btn => {
+    if (['All','Classic','Chicken','Supreme','Veggie'].includes(btn.textContent)) {
+      btn.classList.toggle('active', btn.textContent === cat);
+    }
+  });
+  renderTable();
+  updateKPIs(cat);
+}
+
+function filterSize(size) {
+  currentSize = size;
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    if (['All','Regular','Medium','Large','X-Large'].includes(btn.textContent)) {
+      btn.classList.toggle('active', btn.textContent === size);
+    }
+  });
+}
+
+function updateKPIs(cat) {
+  const data = cat === 'All' ? ALL_PIZZAS : ALL_PIZZAS.filter(p => p.cat === cat);
+  const rev = data.reduce((s, p) => s + p.rev, 0);
+  const orders = data.reduce((s, p) => s + p.orders, 0);
+  const qty = data.reduce((s, p) => s + p.qty, 0);
+  document.getElementById('kpi-revenue').textContent = '$' + rev.toLocaleString();
+  document.getElementById('kpi-orders').textContent = orders.toLocaleString();
+  document.getElementById('kpi-pizzas').textContent = qty.toLocaleString();
+}
+
+// Init
+renderTable();
+</script>
+</body>
+</html>
